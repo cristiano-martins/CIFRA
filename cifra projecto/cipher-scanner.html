@@ -1,0 +1,1840 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CIPHER — Segurança Digital</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0A0A0A">
+<style>
+  :root {
+    --void: #0A0A0A;
+    --panel: #1A1A1A;
+    --panel-alt: #141417;
+    --border: #2A2A2E;
+    --steel: #8A8F98;
+    --steel-dim: #5B6068;
+    --text: #F5F7FA;
+    --cipher: #2FF3E0;
+    --amber: #FFB020;
+    --red: #FF4757;
+    --critical: #FF2E63;
+    --mono: ui-monospace, 'Cascadia Code', 'SF Mono', 'Roboto Mono', monospace;
+    --sans: -apple-system, 'Segoe UI', system-ui, sans-serif;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--void);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    padding-bottom: 40px;
+  }
+  a { color: inherit; }
+
+  /* ---------- SHELL ---------- */
+  .shell { max-width: 760px; margin: 0 auto; padding: 0 18px; }
+
+  header.topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 20px 0 16px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 18px;
+  }
+  .brand { display: flex; align-items: baseline; gap: 10px; }
+  .brand h1 {
+    font-family: var(--mono);
+    font-size: 1.3rem;
+    letter-spacing: 3px;
+    color: var(--cipher);
+    text-shadow: 0 0 12px rgba(47,243,224,0.45);
+  }
+  .brand span.tag {
+    font-size: 0.65rem;
+    color: var(--steel);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .live-clock { font-family: var(--mono); font-size: 0.72rem; color: var(--steel-dim); }
+
+  nav.tabs {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 6px;
+    margin-bottom: 22px;
+  }
+  nav.tabs button {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    color: var(--steel);
+    padding: 10px 4px;
+    border-radius: 8px;
+    font-size: 0.68rem;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    cursor: pointer;
+    font-family: var(--sans);
+    transition: border-color .15s, color .15s;
+  }
+  nav.tabs button.active {
+    border-color: var(--cipher);
+    color: var(--cipher);
+    box-shadow: 0 0 10px rgba(47,243,224,0.15) inset;
+  }
+
+  .view { display: none; }
+  .view.active { display: block; }
+
+  /* ---------- CARDS ---------- */
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px;
+    margin-bottom: 16px;
+  }
+  .panel h2 {
+    font-size: 0.72rem;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--steel);
+    margin-bottom: 14px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .panel h2 .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--cipher); box-shadow: 0 0 6px var(--cipher); }
+
+  /* ---------- DASHBOARD ---------- */
+  .disclaimer {
+    font-size: 0.75rem;
+    color: var(--steel);
+    line-height: 1.5;
+    background: var(--panel-alt);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--cipher);
+    border-radius: 8px;
+    padding: 12px 14px;
+    margin-bottom: 18px;
+  }
+
+  .status-grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
+  .status-row {
+    display: flex; align-items: center; justify-content: space-between;
+    font-family: var(--mono); font-size: 0.78rem;
+    padding: 8px 10px;
+    background: var(--panel-alt);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+  }
+  .status-row .label { color: var(--text); }
+  .status-row .state { display: flex; align-items: center; gap: 6px; font-size: 0.7rem; letter-spacing: 0.5px; }
+  .status-row .bulb { width: 7px; height: 7px; border-radius: 50%; }
+  .bulb.on { background: var(--cipher); box-shadow: 0 0 7px var(--cipher); }
+  .bulb.pending { background: var(--amber); box-shadow: 0 0 7px var(--amber); animation: pulsar 1.6s ease-in-out infinite; }
+  @keyframes pulsar { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
+  .state.on-text { color: var(--cipher); }
+  .state.pending-text { color: var(--amber); }
+
+  .module-grid { display: grid; grid-template-columns: 1fr; gap: 10px; margin-bottom: 16px; }
+  @media (min-width: 560px) { .module-grid { grid-template-columns: repeat(2, 1fr); } }
+  .module-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 14px;
+    cursor: pointer;
+    text-align: left;
+    color: var(--text);
+    font-family: var(--sans);
+    transition: border-color .15s;
+  }
+  .module-card:hover { border-color: var(--cipher); }
+  .module-card .icon { font-family: var(--mono); color: var(--cipher); font-size: 1.1rem; margin-bottom: 8px; display: block; }
+  .module-card .title { font-size: 0.85rem; font-weight: 600; margin-bottom: 4px; }
+  .module-card .desc { font-size: 0.72rem; color: var(--steel); line-height: 1.4; }
+
+  .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .stat-box { background: var(--panel-alt); border: 1px solid var(--border); border-radius: 8px; padding: 12px; text-align: center; }
+  .stat-box .num { font-family: var(--mono); font-size: 1.3rem; color: var(--cipher); }
+  .stat-box .lbl { font-size: 0.62rem; color: var(--steel); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; }
+
+  /* ---------- FORM / INPUT ---------- */
+  .campo-alvo { display: flex; gap: 8px; margin-bottom: 4px; }
+  .campo-alvo input {
+    flex: 1;
+    background: var(--void);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 13px 14px;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 0.9rem;
+    outline: none;
+  }
+  .campo-alvo input:focus { border-color: var(--cipher); }
+  .hint { font-size: 0.68rem; color: var(--steel-dim); margin-bottom: 14px; }
+  .erro-input { font-size: 0.75rem; color: var(--red); margin-bottom: 10px; display: none; }
+
+  .btn-primario {
+    width: 100%;
+    padding: 14px;
+    background: var(--cipher);
+    color: #04120F;
+    border: none;
+    border-radius: 9px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    letter-spacing: 1.5px;
+    cursor: pointer;
+    box-shadow: 0 0 18px rgba(47,243,224,0.3);
+  }
+  .btn-primario:disabled { opacity: 0.5; cursor: not-allowed; box-shadow: none; }
+  .btn-secundario {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--steel);
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 0.72rem;
+    cursor: pointer;
+  }
+  .btn-secundario:hover { border-color: var(--steel); color: var(--text); }
+
+  /* ---------- SCANNING ---------- */
+  .scanning-box { display: none; margin-top: 16px; }
+  .scanning-box.active { display: block; }
+  .scanning-title { font-family: var(--mono); font-size: 0.75rem; color: var(--cipher); letter-spacing: 1px; margin-bottom: 10px; }
+  .barra { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; margin-bottom: 14px; }
+  .barra-fill { height: 100%; width: 0%; background: var(--cipher); box-shadow: 0 0 8px var(--cipher); transition: width .25s linear; }
+  .passo {
+    display: flex; align-items: center; gap: 8px;
+    font-family: var(--mono); font-size: 0.72rem;
+    padding: 4px 0;
+    color: var(--steel-dim);
+  }
+  .passo .marcador { width: 14px; flex-shrink: 0; text-align: center; }
+  .passo.feito { color: var(--text); }
+  .passo.feito .marcador { color: var(--cipher); }
+  .passo.pulado { color: var(--steel-dim); }
+  .passo.pulado .marcador { color: var(--amber); }
+  .passo .tag-backend { font-size: 0.6rem; color: var(--amber); margin-left: 4px; }
+
+  /* ---------- RESULTS ---------- */
+  .resultado-box { display: none; margin-top: 16px; }
+  .resultado-box.active { display: block; animation: surgir .25s ease; }
+  @keyframes surgir { from { opacity: 0; transform: translateY(4px);} to { opacity: 1; transform: translateY(0);} }
+
+  .score-hero {
+    text-align: center;
+    padding: 22px 16px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: var(--panel-alt);
+    margin-bottom: 16px;
+  }
+  .score-hero .num { font-family: var(--mono); font-size: 2.6rem; font-weight: 700; }
+  .score-hero .num small { font-size: 1.1rem; color: var(--steel); }
+  .score-hero .level {
+    display: inline-block;
+    margin-top: 8px;
+    padding: 4px 14px;
+    border-radius: 20px;
+    font-size: 0.7rem;
+    letter-spacing: 1.5px;
+    font-weight: 700;
+    font-family: var(--mono);
+  }
+  .score-hero .note { font-size: 0.68rem; color: var(--steel-dim); margin-top: 10px; line-height: 1.5; }
+  .lvl-LOW { color: var(--cipher); } .badge-LOW { background: rgba(47,243,224,0.12); color: var(--cipher); border: 1px solid var(--cipher); }
+  .lvl-MEDIUM { color: var(--amber); } .badge-MEDIUM { background: rgba(255,176,32,0.12); color: var(--amber); border: 1px solid var(--amber); }
+  .lvl-HIGH { color: var(--red); } .badge-HIGH { background: rgba(255,71,87,0.12); color: var(--red); border: 1px solid var(--red); }
+  .lvl-CRITICAL { color: var(--critical); } .badge-CRITICAL { background: rgba(255,46,99,0.14); color: var(--critical); border: 1px solid var(--critical); animation: pulsar 1.4s infinite; }
+
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .info-item {
+    background: var(--panel-alt);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+  }
+  .info-item.full { grid-column: 1 / -1; }
+  .info-item .k { font-size: 0.6rem; color: var(--steel); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 4px; }
+  .info-item .v { font-family: var(--mono); font-size: 0.8rem; word-break: break-all; }
+  .info-item .v.indisponivel { color: var(--steel-dim); font-style: italic; }
+  .info-item .v.ok { color: var(--cipher); }
+  .info-item .v.alerta { color: var(--amber); }
+  .info-item .v.risco { color: var(--red); }
+
+  .check-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 9px 0; border-bottom: 1px solid var(--border);
+    font-size: 0.8rem;
+  }
+  .check-row:last-child { border-bottom: none; }
+  .check-row .desc-mini { font-size: 0.64rem; color: var(--steel-dim); margin-top: 2px; }
+  .flag { font-family: var(--mono); font-size: 0.68rem; padding: 2px 8px; border-radius: 12px; white-space: nowrap; }
+  .flag.presente { color: var(--cipher); border: 1px solid var(--cipher); }
+  .flag.ausente { color: var(--amber); border: 1px solid var(--amber); }
+  .flag.na { color: var(--steel-dim); border: 1px solid var(--border); }
+
+  .motivos-lista, .recs-lista { list-style: none; }
+  .motivos-lista li, .recs-lista li {
+    font-size: 0.8rem; padding: 8px 0 8px 20px; position: relative;
+    border-bottom: 1px solid var(--border); line-height: 1.4;
+  }
+  .motivos-lista li:last-child, .recs-lista li:last-child { border-bottom: none; }
+  .motivos-lista li::before { content: '▲'; position: absolute; left: 0; color: var(--amber); font-size: 0.6rem; top: 11px; }
+  .recs-lista li::before { content: '→'; position: absolute; left: 0; color: var(--cipher); top: 8px; }
+
+  .fontes-lista { display: flex; flex-wrap: wrap; gap: 6px; }
+  .fonte-chip {
+    font-family: var(--mono); font-size: 0.65rem;
+    padding: 4px 10px; border-radius: 14px;
+    border: 1px solid var(--border); color: var(--steel);
+  }
+  .fonte-chip.ativa { border-color: var(--cipher); color: var(--cipher); }
+
+  .acoes-resultado { display: flex; gap: 8px; margin-top: 6px; }
+  .acoes-resultado button { flex: 1; }
+
+  /* ---------- HISTÓRICO ---------- */
+  .hist-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 0; border-bottom: 1px solid var(--border);
+  }
+  .hist-item:last-child { border-bottom: none; }
+  .hist-item .tipo-icone {
+    width: 32px; height: 32px; border-radius: 8px;
+    background: var(--panel-alt); border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--mono); font-size: 0.65rem; color: var(--cipher);
+    flex-shrink: 0;
+  }
+  .hist-item .corpo { flex: 1; min-width: 0; }
+  .hist-item .alvo { font-family: var(--mono); font-size: 0.8rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .hist-item .meta { font-size: 0.66rem; color: var(--steel-dim); margin-top: 2px; }
+  .hist-item .score-mini { font-family: var(--mono); font-size: 0.78rem; font-weight: 700; flex-shrink: 0; }
+  .hist-item .acoes { display: flex; gap: 6px; flex-shrink: 0; }
+  .hist-item .acoes button {
+    width: 28px; height: 28px; border-radius: 6px;
+    background: none; border: 1px solid var(--border); color: var(--steel);
+    cursor: pointer; font-size: 0.75rem;
+  }
+  .vazio { color: var(--steel-dim); font-size: 0.8rem; font-style: italic; text-align: center; padding: 20px 0; }
+  .hist-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+
+  footer.rodape {
+    text-align: center; font-size: 0.65rem; color: var(--steel-dim);
+    margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--border);
+    line-height: 1.6;
+  }
+
+  /* ---------- GERADOR DE SENHA ---------- */
+  .readout {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--void);
+    border: 1px solid var(--cipher);
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 20px;
+    box-shadow: 0 0 18px rgba(47, 243, 224, 0.12), inset 0 0 12px rgba(47, 243, 224, 0.04);
+  }
+  #senha {
+    flex: 1;
+    min-width: 0;
+    background: none;
+    border: none;
+    outline: none;
+    color: var(--cipher);
+    font-family: var(--mono);
+    font-size: 1.05rem;
+    letter-spacing: 0.5px;
+  }
+  #senha::placeholder { color: var(--steel); opacity: 0.6; }
+  .cursor {
+    width: 2px;
+    height: 18px;
+    background: var(--cipher);
+    animation: piscar 1s step-end infinite;
+    flex-shrink: 0;
+  }
+  @keyframes piscar { 50% { opacity: 0; } }
+  #btn-copiar {
+    background: none;
+    border: 1px solid var(--steel);
+    border-radius: 6px;
+    color: var(--steel);
+    font-size: 1rem;
+    width: 34px;
+    height: 34px;
+    flex-shrink: 0;
+    cursor: pointer;
+  }
+  .campo { margin-bottom: 18px; }
+  .campo-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.85rem;
+    color: var(--steel);
+    margin-bottom: 8px;
+  }
+  #valor-comprimento, #valor-quantidade { color: var(--cipher); font-family: var(--mono); }
+  input[type="range"] { width: 100%; accent-color: var(--cipher); }
+  .medidor { display: flex; gap: 6px; }
+  .segmento {
+    flex: 1;
+    height: 6px;
+    border-radius: 3px;
+    background: var(--border);
+    transition: background 0.3s ease, box-shadow 0.3s ease;
+  }
+  .segmento.seg-fraca { background: var(--red); box-shadow: 0 0 8px rgba(255, 71, 87, 0.5); }
+  .segmento.seg-media { background: var(--amber); box-shadow: 0 0 8px rgba(255, 176, 32, 0.5); }
+  .segmento.seg-forte { background: var(--cipher); box-shadow: 0 0 10px rgba(47, 243, 224, 0.6); }
+  #texto-forca { font-family: var(--mono); }
+  .checkboxes {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  .check-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    color: var(--text);
+    cursor: pointer;
+  }
+  input[type="checkbox"] { accent-color: var(--cipher); width: 17px; height: 17px; flex-shrink: 0; }
+  #btn-gerar {
+    width: 100%;
+    padding: 15px;
+    background: var(--cipher);
+    color: #04120F;
+    border: none;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 0.95rem;
+    letter-spacing: 2px;
+    cursor: pointer;
+    box-shadow: 0 0 20px rgba(47, 243, 224, 0.35);
+  }
+  #btn-copiar:focus-visible, #btn-gerar:focus-visible, input:focus-visible {
+    outline: 2px solid var(--cipher);
+    outline-offset: 2px;
+  }
+  .historico-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+    font-family: var(--mono);
+    font-size: 0.82rem;
+  }
+  .historico-item span {
+    overflow-x: auto;
+    white-space: nowrap;
+    color: var(--text);
+  }
+  .historico-item button {
+    background: none;
+    border: 1px solid var(--steel);
+    border-radius: 6px;
+    color: var(--steel);
+    width: 28px;
+    height: 28px;
+    flex-shrink: 0;
+    cursor: pointer;
+  }
+  .lista-lote {
+    list-style: none;
+    margin-top: 16px;
+    max-height: 220px;
+    overflow-y: auto;
+  }
+  .historico { margin-top: 20px; }
+  .historico summary {
+    cursor: pointer;
+    font-size: 0.85rem;
+    color: var(--steel);
+    list-style: none;
+    padding: 4px 0;
+  }
+  .historico summary::-webkit-details-marker { display: none; }
+  .historico summary::before {
+    content: '▸';
+    display: inline-block;
+    margin-right: 6px;
+    transition: transform 0.2s;
+  }
+  .historico[open] summary::before { transform: rotate(90deg); }
+  #lista-historico {
+    list-style: none;
+    max-height: 160px;
+    overflow-y: auto;
+    margin-top: 8px;
+  }
+  .historico-vazio {
+    color: var(--steel);
+    font-size: 0.8rem;
+    padding: 8px 0;
+    font-style: italic;
+  }
+  .link-limpar {
+    background: none;
+    border: none;
+    color: var(--steel);
+    font-size: 0.75rem;
+    text-decoration: underline;
+    cursor: pointer;
+    margin-top: 8px;
+    padding: 4px 0;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .bulb.pending, .badge-CRITICAL, .cursor { animation: none; }
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <header class="topbar">
+    <div class="brand">
+      <h1>CIPHER SCANNER</h1>
+      <span class="tag">análise de segurança digital</span>
+    </div>
+    <div class="live-clock" id="relogio">--:--:--</div>
+  </header>
+
+  <nav class="tabs">
+    <button data-view="dashboard" class="active">Painel</button>
+    <button data-view="senha">Senha</button>
+    <button data-view="url">URL</button>
+    <button data-view="domain">Domínio</button>
+    <button data-view="email">E-mail</button>
+  </nav>
+
+  <div class="disclaimer" id="disclaimer-modo">
+    <strong style="color:var(--text)">Modo somente-frontend.</strong> Sem um backend configurado, o CIPHER roda inteiramente no navegador: valida formato, aplica heurísticas locais de phishing e detecta encurtadores conhecidos. Configure a URL do backend no painel "Conexão com Backend" abaixo para habilitar DNS, TLS, WHOIS e reputação reais. Mesmo com tudo configurado, um resultado limpo indica ausência de indícios nas fontes consultadas — nunca uma garantia de segurança total.
+  </div>
+
+  <!-- ==================== DASHBOARD ==================== -->
+  <section class="view active" id="view-dashboard">
+    <div class="module-grid">
+      <button class="module-card" data-goto="senha">
+        <span class="icon">⚿</span>
+        <div class="title">Gerador de Senha</div>
+        <div class="desc">Gere senhas fortes e aleatórias com controle de comprimento e composição.</div>
+      </button>
+      <button class="module-card" data-goto="url">
+        <span class="icon">⌁</span>
+        <div class="title">URL Scanner</div>
+        <div class="desc">Analise links quanto a phishing, encurtadores e estrutura suspeita.</div>
+      </button>
+      <button class="module-card" data-goto="domain">
+        <span class="icon">◈</span>
+        <div class="title">Domain Scanner</div>
+        <div class="desc">Verifique a formatação e os sinais de risco de um domínio.</div>
+      </button>
+      <button class="module-card" data-goto="email">
+        <span class="icon">✉</span>
+        <div class="title">Email Security</div>
+        <div class="desc">Confira formato, domínio e boas práticas de um endereço.</div>
+      </button>
+    </div>
+
+    <div class="panel">
+      <h2><span class="dot"></span>Conexão com Backend</h2>
+      <div class="campo-alvo">
+        <input type="text" id="input-api-base" placeholder="https://seu-backend.onrender.com" autocomplete="off" spellcheck="false">
+        <button class="btn-primario" style="width:auto;padding:0 16px" id="btn-salvar-api">SALVAR</button>
+      </div>
+      <div class="hint" id="status-api-base">Nenhum backend configurado — as análises usam heurística local.</div>
+    </div>
+
+    <div class="panel">
+      <h2><span class="dot"></span>System Status</h2>
+      <div class="status-grid" id="status-grid"></div>
+    </div>
+
+    <div class="panel">
+      <h2><span class="dot"></span>Resumo</h2>
+      <div class="stat-grid">
+        <div class="stat-box"><div class="num" id="stat-total">0</div><div class="lbl">análises</div></div>
+        <div class="stat-box"><div class="num" id="stat-alto">0</div><div class="lbl">risco alto+</div></div>
+        <div class="stat-box"><div class="num" id="stat-hoje">0</div><div class="lbl">hoje</div></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="hist-header-row">
+        <h2 style="margin:0"><span class="dot"></span>Recent Scans</h2>
+        <button class="btn-secundario" data-goto-tab="history-tab-hidden" onclick="document.querySelector('[data-view=\'url\']').click()" style="display:none"></button>
+      </div>
+      <div id="recentes-lista"></div>
+    </div>
+  </section>
+
+  <!-- ==================== GERADOR DE SENHA ==================== -->
+  <section class="view" id="view-senha">
+    <div class="panel">
+      <h2><span class="dot"></span>Gerador de Senha</h2>
+      <div class="readout">
+        <input type="text" id="senha" readonly placeholder="aguardando geração">
+        <span class="cursor"></span>
+        <button id="btn-copiar" aria-label="Copiar senha">⧉</button>
+      </div>
+
+      <div class="campo">
+        <div class="campo-label">
+          <span>Força</span>
+          <span id="texto-forca">—</span>
+        </div>
+        <div class="medidor">
+          <div class="segmento" id="seg-1"></div>
+          <div class="segmento" id="seg-2"></div>
+          <div class="segmento" id="seg-3"></div>
+          <div class="segmento" id="seg-4"></div>
+        </div>
+      </div>
+
+      <div class="campo">
+        <div class="campo-label">
+          <span>Comprimento</span>
+          <span id="valor-comprimento">16</span>
+        </div>
+        <input type="range" id="comprimento" min="4" max="32" value="16">
+      </div>
+
+      <div class="campo">
+        <div class="campo-label">
+          <span>Quantidade</span>
+          <span id="valor-quantidade">1</span>
+        </div>
+        <input type="range" id="quantidade" min="1" max="10" value="1">
+      </div>
+
+      <div class="checkboxes">
+        <label class="check-item"><input type="checkbox" id="maiusculas" checked> Maiúsculas (A-Z)</label>
+        <label class="check-item"><input type="checkbox" id="minusculas" checked> Minúsculas (a-z)</label>
+        <label class="check-item"><input type="checkbox" id="numeros" checked> Números (0-9)</label>
+        <label class="check-item"><input type="checkbox" id="simbolos" checked> Símbolos (!@#$)</label>
+      </div>
+      <button id="btn-gerar">GERAR SENHA</button>
+
+      <ul id="lista-lote" class="lista-lote" hidden></ul>
+
+      <details class="historico">
+        <summary>histórico</summary>
+        <ul id="lista-historico"></ul>
+        <button id="btn-limpar-historico-senha" class="link-limpar">limpar histórico</button>
+      </details>
+    </div>
+  </section>
+
+  <!-- ==================== URL SCANNER ==================== -->
+  <section class="view" id="view-url">
+    <div class="panel">
+      <h2><span class="dot"></span>URL Scanner</h2>
+      <div class="campo-alvo">
+        <input type="text" id="input-url" placeholder="https://exemplo.com/caminho" autocomplete="off" spellcheck="false">
+        <button class="btn-primario" style="width:auto;padding:0 18px" id="btn-analisar-url">ANALISAR</button>
+      </div>
+      <div class="hint">Aceita URLs com ou sem protocolo. Ex.: exemplo.com/login</div>
+      <div class="erro-input" id="erro-url"></div>
+
+      <div class="scanning-box" id="scan-box-url">
+        <div class="scanning-title">ANALISANDO URL...</div>
+        <div class="barra"><div class="barra-fill" id="barra-url"></div></div>
+        <div id="passos-url"></div>
+      </div>
+
+      <div class="resultado-box" id="resultado-url"></div>
+    </div>
+  </section>
+
+  <!-- ==================== DOMAIN SCANNER ==================== -->
+  <section class="view" id="view-domain">
+    <div class="panel">
+      <h2><span class="dot"></span>Domain Scanner</h2>
+      <div class="campo-alvo">
+        <input type="text" id="input-domain" placeholder="exemplo.com" autocomplete="off" spellcheck="false">
+        <button class="btn-primario" style="width:auto;padding:0 18px" id="btn-analisar-domain">ANALISAR</button>
+      </div>
+      <div class="hint">Informe apenas o domínio, sem "https://" ou caminho.</div>
+      <div class="erro-input" id="erro-domain"></div>
+
+      <div class="scanning-box" id="scan-box-domain">
+        <div class="scanning-title">ANALISANDO DOMÍNIO...</div>
+        <div class="barra"><div class="barra-fill" id="barra-domain"></div></div>
+        <div id="passos-domain"></div>
+      </div>
+
+      <div class="resultado-box" id="resultado-domain"></div>
+    </div>
+  </section>
+
+  <!-- ==================== EMAIL SECURITY ==================== -->
+  <section class="view" id="view-email">
+    <div class="panel">
+      <h2><span class="dot"></span>Email Security</h2>
+      <div class="campo-alvo">
+        <input type="text" id="input-email" placeholder="usuario@exemplo.com" autocomplete="off" spellcheck="false">
+        <button class="btn-primario" style="width:auto;padding:0 18px" id="btn-analisar-email">ANALISAR</button>
+      </div>
+      <div class="hint">A análise verifica apenas formato e características públicas do domínio.</div>
+      <div class="erro-input" id="erro-email"></div>
+
+      <div class="scanning-box" id="scan-box-email">
+        <div class="scanning-title">ANALISANDO E-MAIL...</div>
+        <div class="barra"><div class="barra-fill" id="barra-email"></div></div>
+        <div id="passos-email"></div>
+      </div>
+
+      <div class="resultado-box" id="resultado-email"></div>
+    </div>
+  </section>
+
+  <!-- ==================== HISTÓRICO (acessível de todas as views) ==================== -->
+  <section class="panel" id="painel-historico">
+    <div class="hist-header-row">
+      <h2 style="margin:0"><span class="dot"></span>Scan History</h2>
+      <button class="btn-secundario" id="btn-limpar-historico">limpar tudo</button>
+    </div>
+    <div id="historico-lista"></div>
+  </section>
+
+  <footer class="rodape">
+    CIPHER analisa apenas com base em verificações técnicas locais e heurísticas públicas.<br>
+    Senhas geradas ficam salvas apenas neste navegador (localStorage) e nunca são enviadas a nenhum servidor.<br>
+    Nenhuma credencial ou dado de terceiros é acessado, testado ou armazenado pelo Scanner.
+  </footer>
+</div>
+
+<script>
+/* =========================================================
+   ESTADO / CONSTANTES
+   ========================================================= */
+const CHAVE_HIST = 'cipher-scanner-historico';
+const MAX_HIST = 30;
+
+const ENCURTADORES = ['bit.ly','tinyurl.com','t.co','goo.gl','ow.ly','is.gd','buff.ly','rebrand.ly','cutt.ly','shorturl.at','tiny.cc','rb.gy','shorte.st'];
+const TLDS_SUSPEITOS = ['.zip','.review','.country','.kim','.cricket','.science','.work','.party','.gq','.tk','.ml','.cf','.top','.click','.link'];
+const MARCAS_CONHECIDAS = ['paypal','google','microsoft','apple','amazon','netflix','facebook','instagram','whatsapp','bancodobrasil','caixa','itau','santander','bradesco','nubank','mercadolivre','uol','gov.br'];
+const DOMINIOS_DESCARTAVEIS = ['mailinator.com','10minutemail.com','guerrillamail.com','tempmail.com','yopmail.com','trashmail.com','getnada.com'];
+const WEBMAILS_GRATUITOS = ['gmail.com','yahoo.com','yahoo.com.br','hotmail.com','outlook.com','icloud.com','live.com','bol.com.br'];
+
+/* =========================================================
+   NAVEGAÇÃO
+   ========================================================= */
+function irParaView(nome) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById('view-' + nome).classList.add('active');
+  document.querySelectorAll('nav.tabs button').forEach(b => b.classList.toggle('active', b.dataset.view === nome));
+  window.scrollTo({ top: 0, behavior: 'instant' in window ? 'instant' : 'auto' });
+}
+document.querySelectorAll('nav.tabs button').forEach(b => b.addEventListener('click', () => irParaView(b.dataset.view)));
+document.querySelectorAll('[data-goto]').forEach(b => b.addEventListener('click', () => irParaView(b.dataset.goto)));
+
+/* =========================================================
+   RELÓGIO
+   ========================================================= */
+function atualizarRelogio() {
+  document.getElementById('relogio').textContent = new Date().toLocaleTimeString('pt-BR');
+}
+atualizarRelogio();
+setInterval(atualizarRelogio, 1000);
+
+/* =========================================================
+   CONEXÃO COM BACKEND
+   ========================================================= */
+const CHAVE_API_BASE = 'cipher-api-base';
+
+function getApiBase() {
+  return (localStorage.getItem(CHAVE_API_BASE) || '').trim().replace(/\/+$/, '');
+}
+function setApiBase(valor) {
+  localStorage.setItem(CHAVE_API_BASE, valor.trim().replace(/\/+$/, ''));
+}
+
+async function chamarBackend(endpoint, payload) {
+  const base = getApiBase();
+  if (!base) return { ok: false, motivo: 'sem-backend' };
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 60000);
+  try {
+    const resp = await fetch(base + endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+    const dados = await resp.json().catch(() => null);
+    if (!resp.ok) {
+      return { ok: false, motivo: 'erro', mensagem: (dados && dados.detail) || ('HTTP ' + resp.status) };
+    }
+    return { ok: true, dados };
+  } catch (erro) {
+    clearTimeout(timeoutId);
+    return { ok: false, motivo: erro.name === 'AbortError' ? 'timeout' : 'rede', mensagem: erro.message };
+  }
+}
+
+async function testarEAtualizarStatusBackend() {
+  const base = getApiBase();
+  const statusEl = document.getElementById('status-api-base');
+  if (!base) {
+    statusEl.textContent = 'Nenhum backend configurado — as análises usam heurística local.';
+    statusEl.style.color = '';
+    atualizarEnginesComBackend(null);
+    return;
+  }
+  statusEl.textContent = 'Testando conexão com ' + base + '...';
+  statusEl.style.color = 'var(--amber)';
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 60000);
+  try {
+    const resp = await fetch(base + '/api/scanner/status', { signal: controller.signal });
+    clearTimeout(timeoutId);
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const dados = await resp.json();
+    statusEl.textContent = 'Backend conectado: ' + base;
+    statusEl.style.color = 'var(--cipher)';
+    atualizarEnginesComBackend(dados);
+  } catch (erro) {
+    clearTimeout(timeoutId);
+    const motivo = erro.name === 'AbortError' ? 'tempo esgotado' : erro.message;
+    statusEl.textContent = 'Não foi possível conectar (' + motivo + '). Se acabou de fazer deploy no Render, o serviço pode estar "acordando" — tente de novo em cerca de 1 minuto.';
+    statusEl.style.color = 'var(--amber)';
+    atualizarEnginesComBackend(null);
+  }
+}
+
+document.getElementById('btn-salvar-api').addEventListener('click', () => {
+  setApiBase(document.getElementById('input-api-base').value);
+  testarEAtualizarStatusBackend();
+});
+document.getElementById('input-api-base').addEventListener('keydown', e => {
+  if (e.key === 'Enter') { setApiBase(e.target.value); testarEAtualizarStatusBackend(); }
+});
+
+/* =========================================================
+   SYSTEM STATUS
+   ========================================================= */
+const ENGINES = [
+  { nome: 'Validação de formato', chave: null, on: true },
+  { nome: 'Heurística de phishing', chave: null, on: true },
+  { nome: 'Detecção de encurtadores', chave: null, on: true },
+  { nome: 'Resolução DNS', chave: 'dns', on: false },
+  { nome: 'Certificado TLS', chave: 'tls', on: false },
+  { nome: 'WHOIS', chave: 'whois', on: false },
+  { nome: 'Threat Intelligence (VirusTotal)', chave: 'virustotal', on: false },
+  { nome: 'Threat Intelligence (Safe Browsing)', chave: 'safe_browsing', on: false },
+  { nome: 'Data Exposure (vazamentos)', chave: 'data_exposure', on: false },
+];
+function atualizarEnginesComBackend(status) {
+  ENGINES.forEach(e => {
+    if (e.chave) e.on = !!(status && status[e.chave]);
+  });
+  renderizarStatus();
+}
+function renderizarStatus() {
+  const grid = document.getElementById('status-grid');
+  grid.innerHTML = '';
+  ENGINES.forEach(e => {
+    const row = document.createElement('div');
+    row.className = 'status-row';
+    row.innerHTML = `
+      <span class="label">${e.nome}</span>
+      <span class="state ${e.on ? 'on-text' : 'pending-text'}">
+        <span class="bulb ${e.on ? 'on' : 'pending'}"></span>
+        ${e.on ? 'ONLINE' : 'AGUARDANDO BACKEND'}
+      </span>`;
+    grid.appendChild(row);
+  });
+}
+renderizarStatus();
+
+/* =========================================================
+   HISTÓRICO (persistência)
+   ========================================================= */
+function carregarHistorico() {
+  try { return JSON.parse(localStorage.getItem(CHAVE_HIST)) || []; }
+  catch { return []; }
+}
+function salvarHistorico(lista) {
+  try { localStorage.setItem(CHAVE_HIST, JSON.stringify(lista)); } catch {}
+}
+function adicionarHistorico(entrada) {
+  const lista = carregarHistorico();
+  lista.unshift(entrada);
+  if (lista.length > MAX_HIST) lista.length = MAX_HIST;
+  salvarHistorico(lista);
+  renderizarHistorico();
+  renderizarDashboard();
+}
+function apagarHistoricoItem(id) {
+  const lista = carregarHistorico().filter(i => i.id !== id);
+  salvarHistorico(lista);
+  renderizarHistorico();
+  renderizarDashboard();
+}
+function limparHistoricoTudo() {
+  salvarHistorico([]);
+  renderizarHistorico();
+  renderizarDashboard();
+}
+document.getElementById('btn-limpar-historico').addEventListener('click', limparHistoricoTudo);
+
+const ICONE_TIPO = { url: 'URL', domain: 'DOM', email: 'MAIL' };
+
+function criarLinhaHistorico(item, comAcoes = true) {
+  const div = document.createElement('div');
+  div.className = 'hist-item';
+  const data = new Date(item.data);
+  div.innerHTML = `
+    <div class="tipo-icone">${ICONE_TIPO[item.tipo]}</div>
+    <div class="corpo">
+      <div class="alvo">${escaparTexto(item.alvo)}</div>
+      <div class="meta">${data.toLocaleDateString('pt-BR')} ${data.toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'})} · ${item.level}</div>
+    </div>
+    <div class="score-mini lvl-${item.level}">${item.score}</div>
+  `;
+  if (comAcoes) {
+    const acoes = document.createElement('div');
+    acoes.className = 'acoes';
+    const btnDel = document.createElement('button');
+    btnDel.textContent = '✕';
+    btnDel.setAttribute('aria-label', 'Apagar do histórico');
+    btnDel.addEventListener('click', () => apagarHistoricoItem(item.id));
+    acoes.appendChild(btnDel);
+    div.appendChild(acoes);
+  }
+  return div;
+}
+
+function renderizarHistorico() {
+  const lista = carregarHistorico();
+  const container = document.getElementById('historico-lista');
+  container.innerHTML = '';
+  if (lista.length === 0) {
+    const vazio = document.createElement('div');
+    vazio.className = 'vazio';
+    vazio.textContent = 'nenhuma análise realizada ainda';
+    container.appendChild(vazio);
+    return;
+  }
+  lista.forEach(item => container.appendChild(criarLinhaHistorico(item)));
+}
+
+function renderizarDashboard() {
+  const lista = carregarHistorico();
+  document.getElementById('stat-total').textContent = lista.length;
+  document.getElementById('stat-alto').textContent = lista.filter(i => i.level === 'HIGH' || i.level === 'CRITICAL').length;
+  const hoje = new Date().toDateString();
+  document.getElementById('stat-hoje').textContent = lista.filter(i => new Date(i.data).toDateString() === hoje).length;
+
+  const recentes = document.getElementById('recentes-lista');
+  recentes.innerHTML = '';
+  if (lista.length === 0) {
+    const vazio = document.createElement('div');
+    vazio.className = 'vazio';
+    vazio.textContent = 'nenhuma análise realizada ainda';
+    recentes.appendChild(vazio);
+    return;
+  }
+  lista.slice(0, 5).forEach(item => recentes.appendChild(criarLinhaHistorico(item, false)));
+}
+
+function escaparTexto(txt) {
+  const d = document.createElement('div');
+  d.textContent = txt;
+  return d.innerHTML;
+}
+
+/* =========================================================
+   MOTOR DE RISCO (client-side, apenas heurísticas locais)
+   ========================================================= */
+function classificarNivel(score) {
+  if (score <= 20) return 'LOW';
+  if (score <= 50) return 'MEDIUM';
+  if (score <= 75) return 'HIGH';
+  return 'CRITICAL';
+}
+const TEXTO_NIVEL = { LOW: 'BAIXO', MEDIUM: 'MÉDIO', HIGH: 'ALTO', CRITICAL: 'CRÍTICO' };
+
+function motorDeRisco(flags) {
+  // flags: [{ motivo, peso, recomendacao? }]
+  let score = 0;
+  const motivos = [];
+  const recomendacoes = new Set();
+  flags.forEach(f => {
+    if (f.ativo) {
+      score += f.peso;
+      motivos.push(f.motivo);
+      if (f.recomendacao) recomendacoes.add(f.recomendacao);
+    }
+  });
+  score = Math.min(100, score);
+  const level = classificarNivel(score);
+  if (motivos.length === 0) motivos.push('Nenhum indicador heurístico local foi identificado.');
+  if (recomendacoes.size === 0) recomendacoes.add('Nenhuma ação adicional indicada pelas verificações locais disponíveis.');
+  return { score, level, motivos, recomendacoes: [...recomendacoes] };
+}
+
+/* =========================================================
+   PASSOS DE "SCANNING" (animação transparente)
+   ========================================================= */
+function rodarAnimacaoPassos(containerId, barraId, passos, aoFinalizar) {
+  const container = document.getElementById(containerId);
+  const barra = document.getElementById(barraId);
+  container.innerHTML = '';
+  passos.forEach(p => {
+    const linha = document.createElement('div');
+    linha.className = 'passo';
+    linha.innerHTML = `<span class="marcador">…</span> ${p.texto}${p.backend ? '<span class="tag-backend">requer backend</span>' : ''}`;
+    linha.dataset.backend = p.backend ? '1' : '0';
+    container.appendChild(linha);
+  });
+  const linhas = [...container.children];
+  const reduzMovimento = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const passoMs = reduzMovimento ? 0 : 160;
+  let i = 0;
+  function passoSeguinte() {
+    if (i > 0) {
+      const anterior = linhas[i - 1];
+      const backend = anterior.dataset.backend === '1';
+      anterior.classList.add(backend ? 'pulado' : 'feito');
+      anterior.querySelector('.marcador').textContent = backend ? '○' : '✓';
+    }
+    if (i < linhas.length) {
+      barra.style.width = Math.round((i / linhas.length) * 100) + '%';
+      i++;
+      setTimeout(passoSeguinte, passoMs);
+    } else {
+      barra.style.width = '100%';
+      setTimeout(aoFinalizar, 200);
+    }
+  }
+  passoSeguinte();
+}
+
+/* =========================================================
+   RENDER DE RESULTADO (genérico)
+   ========================================================= */
+function renderInfoItem(chave, valor, opts) {
+  opts = opts || {};
+  return `<div class="info-item${opts.full ? ' full' : ''}">
+      <div class="k">${chave}</div>
+      <div class="v ${opts.cls || ''}">${valor}</div>
+    </div>`;
+}
+
+function exibirResultadoGenerico(boxId, canonical) {
+  const box = document.getElementById(boxId);
+  const checksHtml = (canonical.checks && canonical.checks.length) ? `
+    <div class="panel" style="background:transparent;border:none;padding:0;margin-top:16px">
+      <h2><span class="dot"></span>Sinais verificados</h2>
+      ${canonical.checks.map(c => `<div class="check-row"><span>${c.label}</span><span class="flag ${c.cls}">${c.texto}</span></div>`).join('')}
+    </div>` : '';
+  const notaBackendHtml = canonical.notaBackend ? `<div class="hint" style="margin-top:12px">${escaparTexto(canonical.notaBackend)}</div>` : '';
+
+  box.innerHTML = `
+    ${renderScoreHero(canonical.score, canonical.level, canonical.nota)}
+    <div class="panel" style="background:transparent;border:none;padding:0">
+      <h2><span class="dot"></span>${canonical.tituloInfo}</h2>
+      <div class="info-grid">
+        ${canonical.infoItems.map(i => renderInfoItem(i.k, i.v, { cls: i.cls, full: i.full })).join('')}
+      </div>
+    </div>
+    ${checksHtml}
+    ${renderMotivosRecs(canonical.motivos, canonical.recomendacoes)}
+    ${renderFontes(canonical.fontesAtivas, canonical.fontesPendentes)}
+    ${notaBackendHtml}
+    <div class="acoes-resultado">
+      <button class="btn-secundario" onclick="document.getElementById('painel-historico').scrollIntoView({behavior:'smooth'})">Ver no histórico</button>
+    </div>
+  `;
+  box.classList.add('active');
+}
+
+function renderScoreHero(score, level, nota) {
+  return `
+    <div class="score-hero">
+      <div class="num lvl-${level}">${score}<small>/100</small></div>
+      <div class="level badge-${level}">RISCO ${TEXTO_NIVEL[level]}</div>
+      <div class="note">${nota}</div>
+    </div>`;
+}
+
+function renderMotivosRecs(motivos, recomendacoes) {
+  return `
+    <div class="panel" style="background:transparent;border:none;padding:0;margin-top:16px">
+      <h2><span class="dot"></span>Por que este resultado?</h2>
+      <ul class="motivos-lista">${motivos.map(m => `<li>${escaparTexto(m)}</li>`).join('')}</ul>
+    </div>
+    <div class="panel" style="background:transparent;border:none;padding:0;margin-top:16px">
+      <h2><span class="dot"></span>Recomendações</h2>
+      <ul class="recs-lista">${recomendacoes.map(r => `<li>${escaparTexto(r)}</li>`).join('')}</ul>
+    </div>`;
+}
+
+function renderFontes(ativas, pendentes) {
+  return `
+    <div class="panel" style="background:transparent;border:none;padding:0;margin-top:16px">
+      <h2><span class="dot"></span>Fontes consultadas</h2>
+      <div class="fontes-lista">
+        ${ativas.map(f => `<span class="fonte-chip ativa">${f}</span>`).join('')}
+        ${pendentes.map(f => `<span class="fonte-chip">${f} — não configurada</span>`).join('')}
+      </div>
+    </div>`;
+}
+
+/* =========================================================
+   URL SCANNER
+   ========================================================= */
+function normalizarURL(bruto) {
+  let v = bruto.trim();
+  if (!v) return null;
+  if (!/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//.test(v)) v = 'https://' + v;
+  try { return new URL(v); } catch { return null; }
+}
+
+function analisarHeuristicaURL(urlObj) {
+  const host = urlObj.hostname.toLowerCase();
+  const urlCompleta = urlObj.href;
+  const ehIP = /^(\d{1,3}\.){3}\d{1,3}$/.test(host);
+  const partesHost = host.split('.');
+  const numSubdominios = Math.max(0, partesHost.length - 2);
+  const encurtador = ENCURTADORES.includes(host);
+  const tldSuspeito = TLDS_SUSPEITOS.some(t => host.endsWith(t));
+  const temArroba = urlCompleta.includes('@');
+  const httpsAtivo = urlObj.protocol === 'https:';
+  const urlLonga = urlCompleta.length > 100;
+  const muitosSubdominios = numSubdominios > 3;
+  const punycode = host.includes('xn--');
+
+  const marcaSuspeita = MARCAS_CONHECIDAS.find(m => host.includes(m) && !host.endsWith('.' + m + '.com') && host !== m + '.com' && !host.startsWith(m + '.'));
+
+  const flags = [
+    { ativo: !httpsAtivo, motivo: 'A URL não utiliza HTTPS.', peso: 15, recomendacao: 'Evite inserir dados sensíveis em conexões sem HTTPS.' },
+    { ativo: ehIP, motivo: 'O host é um endereço IP em vez de um domínio nomeado.', peso: 20, recomendacao: 'Desconfie de links que usam IP diretamente como destino.' },
+    { ativo: temArroba, motivo: 'A URL contém "@", técnica comum para mascarar o destino real.', peso: 25, recomendacao: 'Não acesse links com "@" no meio da URL sem confirmar o destino.' },
+    { ativo: tldSuspeito, motivo: 'O domínio usa uma extensão (TLD) frequentemente associada a abuso.', peso: 12, recomendacao: 'Confirme a legitimidade do domínio antes de prosseguir.' },
+    { ativo: urlLonga, motivo: 'A URL é incomumente longa.', peso: 8, recomendacao: 'URLs muito longas podem esconder parâmetros ou redirecionamentos suspeitos.' },
+    { ativo: muitosSubdominios, motivo: 'A URL usa um número elevado de subdomínios.', peso: 10, recomendacao: 'Verifique se todos os subdomínios pertencem à organização esperada.' },
+    { ativo: punycode, motivo: 'O domínio usa codificação punycode (possível caractere internacionalizado disfarçado).', peso: 20, recomendacao: 'Compare visualmente com o domínio oficial antes de confiar.' },
+    { ativo: !!marcaSuspeita, motivo: `O domínio contém o termo "${marcaSuspeita}", associado a uma marca conhecida, mas não corresponde ao domínio oficial dela.`, peso: 30, recomendacao: 'Não insira credenciais até confirmar que o domínio é realmente da marca.' },
+    { ativo: encurtador, motivo: 'URL encurtada detectada — o destino final não pôde ser verificado sem backend.', peso: 5, recomendacao: 'Prefira expandir encurtadores em um serviço confiável antes de clicar.' },
+  ];
+
+  return { host, ehIP, numSubdominios, encurtador, httpsAtivo, flags };
+}
+
+function canonicalLocalURL(urlObj) {
+  const h = analisarHeuristicaURL(urlObj);
+  const resultado = motorDeRisco(h.flags);
+  const params = [...urlObj.searchParams.keys()];
+  return {
+    score: resultado.score, level: resultado.level,
+    nota: 'Score calculado apenas com heurísticas locais. Sem consulta a bases de reputação externas neste modo.',
+    tituloInfo: 'Informações da URL',
+    infoItems: [
+      { k: 'URL original', v: escaparTexto(urlObj.href), full: true },
+      { k: 'URL final', v: 'Não verificada — requer backend', cls: 'indisponivel' },
+      { k: 'Domínio', v: escaparTexto(h.host) },
+      { k: 'Subdomínios', v: h.numSubdominios },
+      { k: 'Protocolo', v: urlObj.protocol.replace(':', '').toUpperCase(), cls: h.httpsAtivo ? 'ok' : 'alerta' },
+      { k: 'Porta', v: urlObj.port || '(padrão)' },
+      { k: 'Caminho', v: escaparTexto(urlObj.pathname || '/'), full: true },
+      { k: 'Parâmetros', v: params.length ? escaparTexto(params.join(', ')) : 'nenhum', full: true },
+      { k: 'Redirecionamentos', v: 'Não verificado — requer backend', cls: 'indisponivel' },
+    ],
+    checks: [
+      { label: 'HTTPS', texto: h.httpsAtivo ? '✓ ativo' : '⚠ ausente', cls: h.httpsAtivo ? 'presente' : 'ausente' },
+      { label: 'Certificado TLS', texto: 'requer backend', cls: 'na' },
+      { label: 'Endereço IP como host', texto: h.ehIP ? '⚠ sim' : '✓ não', cls: h.ehIP ? 'ausente' : 'presente' },
+      { label: 'Encurtador de URL', texto: h.encurtador ? '⚠ detectado' : '✓ não detectado', cls: h.encurtador ? 'ausente' : 'presente' },
+      { label: 'Reputação (VirusTotal / Safe Browsing)', texto: 'não configurada', cls: 'na' },
+    ],
+    motivos: resultado.motivos, recomendacoes: resultado.recomendacoes,
+    fontesAtivas: ['Heurística local', 'Análise de formato'],
+    fontesPendentes: ['VirusTotal', 'Google Safe Browsing', 'DNS/WHOIS', 'TLS'],
+    notaBackend: null,
+  };
+}
+
+function canonicalBackendURL(data) {
+  const info = data.url_info || {};
+  const sec = data.security || {};
+  const tls = sec.tls || {};
+  const rep = (data.threat_intelligence && data.threat_intelligence.reputation) || {};
+  const repStatus = (data.threat_intelligence && data.threat_intelligence.reputation_status) || 'unknown';
+
+  const fontesAtivas = ['DNS', 'TLS', 'Heurística de phishing'];
+  const fontesPendentes = [];
+  Object.values(rep).forEach(r => {
+    const rotulo = r.source || 'Fonte de reputação';
+    if (r.status === 'not_configured') fontesPendentes.push(rotulo); else fontesAtivas.push(rotulo);
+  });
+
+  let repTexto = 'sem dados', repCls = 'na';
+  if (repStatus === 'clean') { repTexto = '✓ sem indícios'; repCls = 'presente'; }
+  else if (repStatus === 'flagged') { repTexto = '⚠ sinalizado'; repCls = 'ausente'; }
+
+  const dns = (data.network && data.network.dns) || {};
+  const dnsResumo = Object.entries(dns).filter(([, v]) => v && v.length).map(([k, v]) => `${k}: ${v.join(', ')}`).join(' · ') || 'nenhum registro encontrado';
+
+  return {
+    score: data.risk.score, level: data.risk.level,
+    nota: 'Dados reais obtidos do backend (DNS, TLS' + (fontesAtivas.length > 3 ? ' e fontes de reputação configuradas' : '') + ').',
+    tituloInfo: 'Informações da URL',
+    infoItems: [
+      { k: 'URL original', v: escaparTexto(info.original_url || ''), full: true },
+      { k: 'URL final', v: escaparTexto(info.final_url || (data.host_blocked ? 'bloqueada por proteção SSRF' : 'não disponível')), full: true },
+      { k: 'Domínio', v: escaparTexto(info.domain || '') },
+      { k: 'Subdomínios', v: info.subdomain_count ?? '—' },
+      { k: 'Protocolo', v: info.protocol || '—', cls: sec.https_used ? 'ok' : 'alerta' },
+      { k: 'Porta', v: info.port ?? '—' },
+      { k: 'Caminho', v: escaparTexto(info.path || '/'), full: true },
+      { k: 'Parâmetros', v: (info.params && info.params.length) ? escaparTexto(info.params.join(', ')) : 'nenhum', full: true },
+      { k: 'Redirecionamentos', v: info.redirect_count ?? 0 },
+      { k: 'Registros DNS', v: escaparTexto(dnsResumo), full: true },
+    ],
+    checks: [
+      { label: 'HTTPS', texto: sec.https_used ? '✓ ativo' : '⚠ ausente', cls: sec.https_used ? 'presente' : 'ausente' },
+      { label: 'Certificado TLS', texto: tls.https_available ? (tls.cert_valid ? '✓ válido' : '⚠ inválido') : 'não aplicável', cls: tls.https_available ? (tls.cert_valid ? 'presente' : 'ausente') : 'na' },
+      { label: 'Encurtador de URL', texto: (data.network && data.network.is_shortener) ? '⚠ detectado' : '✓ não detectado', cls: (data.network && data.network.is_shortener) ? 'ausente' : 'presente' },
+      { label: 'Reputação (VirusTotal / Safe Browsing)', texto: repTexto, cls: repCls },
+    ],
+    motivos: data.risk.reasons, recomendacoes: data.risk.recommendations,
+    fontesAtivas, fontesPendentes,
+    notaBackend: data.fetch_error ? ('Aviso do backend: ' + data.fetch_error) : null,
+  };
+}
+
+async function executarScanURL() {
+  const bruto = document.getElementById('input-url').value;
+  const erroEl = document.getElementById('erro-url');
+  erroEl.style.display = 'none';
+  const urlObj = normalizarURL(bruto);
+  if (!urlObj) {
+    erroEl.textContent = 'URL inválida. Verifique o formato e tente novamente.';
+    erroEl.style.display = 'block';
+    return;
+  }
+  if (!['http:', 'https:'].includes(urlObj.protocol)) {
+    erroEl.textContent = 'Apenas URLs http/https são suportadas.';
+    erroEl.style.display = 'block';
+    return;
+  }
+
+  document.getElementById('resultado-url').classList.remove('active');
+  document.getElementById('scan-box-url').classList.add('active');
+  document.getElementById('btn-analisar-url').disabled = true;
+
+  const passos = [
+    { texto: 'Validando formato da URL' },
+    { texto: 'Normalizando URL' },
+    { texto: 'Identificando protocolo' },
+    { texto: 'Resolvendo domínio', backend: true },
+    { texto: 'Verificando DNS', backend: true },
+    { texto: 'Verificando certificado TLS', backend: true },
+    { texto: 'Verificando redirecionamentos reais', backend: true },
+    { texto: 'Detectando encurtador conhecido' },
+    { texto: 'Consultando reputação (VirusTotal / Safe Browsing)', backend: true },
+    { texto: 'Aplicando heurística local de phishing' },
+    { texto: 'Calculando risco heurístico' },
+  ];
+
+  rodarAnimacaoPassos('passos-url', 'barra-url', passos, async () => {
+    const tituloEl = document.querySelector('#scan-box-url .scanning-title');
+    if (getApiBase()) tituloEl.textContent = 'AGUARDANDO RESPOSTA DO BACKEND...';
+
+    const respostaBackend = await chamarBackend('/api/scanner/url', { url: urlObj.href });
+    let canonical;
+    if (respostaBackend.ok) {
+      canonical = canonicalBackendURL(respostaBackend.dados);
+    } else {
+      canonical = canonicalLocalURL(urlObj);
+      if (respostaBackend.motivo !== 'sem-backend') {
+        canonical.notaBackend = 'Backend configurado, mas não respondeu a tempo (' + respostaBackend.mensagem + '). Mostrando heurística local como alternativa — se acabou de fazer deploy no Render, tente de novo em ~1 minuto.';
+      }
+    }
+
+    exibirResultadoGenerico('resultado-url', canonical);
+    tituloEl.textContent = 'ANALISANDO URL...';
+    document.getElementById('scan-box-url').classList.remove('active');
+    document.getElementById('btn-analisar-url').disabled = false;
+
+    adicionarHistorico({
+      id: 'u' + Date.now(),
+      tipo: 'url',
+      alvo: urlObj.href,
+      score: canonical.score,
+      level: canonical.level,
+      data: new Date().toISOString(),
+    });
+  });
+}
+document.getElementById('btn-analisar-url').addEventListener('click', executarScanURL);
+document.getElementById('input-url').addEventListener('keydown', e => { if (e.key === 'Enter') executarScanURL(); });
+
+/* =========================================================
+   DOMAIN SCANNER
+   ========================================================= */
+function normalizarDominio(bruto) {
+  let v = bruto.trim().toLowerCase();
+  v = v.replace(/^https?:\/\//, '').split('/')[0];
+  const regexDominio = /^(?=.{1,253}$)([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}$/;
+  if (!regexDominio.test(v)) return null;
+  return v;
+}
+
+function analisarHeuristicaDominio(dominio) {
+  const partes = dominio.split('.');
+  const numSubdominios = Math.max(0, partes.length - 2);
+  const tldSuspeito = TLDS_SUSPEITOS.some(t => dominio.endsWith(t));
+  const punycode = dominio.includes('xn--');
+  const numHifens = (dominio.match(/-/g) || []).length;
+  const marcaSuspeita = MARCAS_CONHECIDAS.find(m => dominio.includes(m) && dominio !== m + '.com' && !dominio.endsWith('.' + m + '.com'));
+  const muitoLongo = dominio.length > 40;
+
+  const flags = [
+    { ativo: tldSuspeito, motivo: 'O domínio usa uma extensão (TLD) frequentemente associada a abuso.', peso: 12, recomendacao: 'Confirme a legitimidade do domínio antes de confiar nele.' },
+    { ativo: punycode, motivo: 'O domínio usa codificação punycode.', peso: 20, recomendacao: 'Compare visualmente com o domínio oficial esperado.' },
+    { ativo: numHifens >= 3, motivo: 'O domínio contém um número elevado de hífens.', peso: 10, recomendacao: 'Domínios com muitos hífens são comumente usados em campanhas de phishing.' },
+    { ativo: !!marcaSuspeita, motivo: `O domínio contém o termo "${marcaSuspeita}", associado a uma marca conhecida, sem corresponder ao domínio oficial.`, peso: 30, recomendacao: 'Não insira credenciais até confirmar a legitimidade do domínio.' },
+    { ativo: muitoLongo, motivo: 'O nome do domínio é incomumente longo.', peso: 8, recomendacao: 'Domínios muito longos podem tentar imitar nomes legítimos.' },
+    { ativo: numSubdominios > 3, motivo: 'O domínio possui um número elevado de níveis de subdomínio.', peso: 8, recomendacao: 'Verifique se todos os níveis pertencem à organização esperada.' },
+  ];
+
+  return { partes, numSubdominios, flags };
+}
+
+function canonicalLocalDomain(dominio) {
+  const h = analisarHeuristicaDominio(dominio);
+  const resultado = motorDeRisco(h.flags);
+  return {
+    score: resultado.score, level: resultado.level,
+    nota: 'Score calculado apenas com heurísticas locais sobre a estrutura do nome de domínio.',
+    tituloInfo: 'Informações do domínio',
+    infoItems: [
+      { k: 'Domínio', v: escaparTexto(dominio), full: true },
+      { k: 'Subdomínios', v: h.numSubdominios },
+      { k: 'IP', v: 'Não verificado — requer backend', cls: 'indisponivel' },
+      { k: 'ASN / Provedor', v: 'Não verificado — requer backend', cls: 'indisponivel' },
+      { k: 'DNS (A/AAAA/MX/NS/TXT)', v: 'Não verificado — requer backend', cls: 'indisponivel', full: true },
+      { k: 'Certificado TLS', v: 'Não verificado — requer backend', cls: 'indisponivel' },
+      { k: 'Registro público (WHOIS)', v: 'Não verificado — requer backend', cls: 'indisponivel' },
+    ],
+    checks: [],
+    motivos: resultado.motivos, recomendacoes: resultado.recomendacoes,
+    fontesAtivas: ['Heurística local de nome de domínio'],
+    fontesPendentes: ['DNS', 'WHOIS', 'ASN', 'TLS', 'Threat Intelligence'],
+    notaBackend: null,
+  };
+}
+
+function canonicalBackendDomain(data) {
+  const info = data.domain_info || {};
+  const dns = info.dns || {};
+  const tls = info.tls || {};
+  const whois = info.whois || {};
+  const rep = (data.threat_intelligence && data.threat_intelligence.reputation) || {};
+
+  const fontesAtivas = ['DNS'];
+  const fontesPendentes = [];
+  if (tls.https_available !== undefined) fontesAtivas.push('TLS');
+  if (whois.status === 'ok') fontesAtivas.push('WHOIS'); else fontesPendentes.push('WHOIS');
+  Object.values(rep).forEach(r => {
+    const rotulo = r.source || 'Fonte de reputação';
+    if (r.status === 'not_configured') fontesPendentes.push(rotulo); else fontesAtivas.push(rotulo);
+  });
+
+  const dnsResumo = Object.entries(dns).filter(([, v]) => v && v.length).map(([k, v]) => `${k}: ${v.join(', ')}`).join(' · ') || 'nenhum registro encontrado';
+
+  return {
+    score: data.risk.score, level: data.risk.level,
+    nota: 'Dados reais obtidos do backend (DNS, TLS e WHOIS quando disponíveis).',
+    tituloInfo: 'Informações do domínio',
+    infoItems: [
+      { k: 'Domínio', v: escaparTexto(info.domain || ''), full: true },
+      { k: 'Registros DNS', v: escaparTexto(dnsResumo), full: true },
+      { k: 'Certificado TLS', v: tls.https_available ? (tls.cert_valid ? 'válido' : 'inválido/expirado') : 'não disponível na porta 443', cls: tls.https_available ? (tls.cert_valid ? 'ok' : 'risco') : 'indisponivel' },
+      { k: 'Emissor do certificado', v: escaparTexto(tls.issuer || '—') },
+      { k: 'Registrador (WHOIS)', v: escaparTexto(whois.registrar || 'não disponível'), cls: whois.status === 'ok' ? '' : 'indisponivel' },
+      { k: 'Expiração do registro', v: escaparTexto(whois.expiration_date || 'não disponível') },
+    ],
+    checks: [],
+    motivos: data.risk.reasons, recomendacoes: data.risk.recommendations,
+    fontesAtivas, fontesPendentes,
+    notaBackend: data.host_blocked ? 'Este domínio resolve para um endereço interno/privado e foi bloqueado por proteção SSRF.' : null,
+  };
+}
+
+async function executarScanDomain() {
+  const bruto = document.getElementById('input-domain').value;
+  const erroEl = document.getElementById('erro-domain');
+  erroEl.style.display = 'none';
+  const dominio = normalizarDominio(bruto);
+  if (!dominio) {
+    erroEl.textContent = 'Domínio inválido. Use o formato exemplo.com, sem protocolo ou caminho.';
+    erroEl.style.display = 'block';
+    return;
+  }
+
+  document.getElementById('resultado-domain').classList.remove('active');
+  document.getElementById('scan-box-domain').classList.add('active');
+  document.getElementById('btn-analisar-domain').disabled = true;
+
+  const passos = [
+    { texto: 'Validando formato do domínio' },
+    { texto: 'Resolvendo IP', backend: true },
+    { texto: 'Consultando registros DNS (A, AAAA, MX, NS, TXT)', backend: true },
+    { texto: 'Consultando ASN / provedor', backend: true },
+    { texto: 'Verificando certificado TLS', backend: true },
+    { texto: 'Consultando dados públicos de registro', backend: true },
+    { texto: 'Aplicando heurística local de risco' },
+    { texto: 'Consultando reputação', backend: true },
+    { texto: 'Calculando risco heurístico' },
+  ];
+
+  rodarAnimacaoPassos('passos-domain', 'barra-domain', passos, async () => {
+    const tituloEl = document.querySelector('#scan-box-domain .scanning-title');
+    if (getApiBase()) tituloEl.textContent = 'AGUARDANDO RESPOSTA DO BACKEND...';
+
+    const respostaBackend = await chamarBackend('/api/scanner/domain', { domain: dominio });
+    let canonical;
+    if (respostaBackend.ok) {
+      canonical = canonicalBackendDomain(respostaBackend.dados);
+    } else {
+      canonical = canonicalLocalDomain(dominio);
+      if (respostaBackend.motivo !== 'sem-backend') {
+        canonical.notaBackend = 'Backend configurado, mas não respondeu a tempo (' + respostaBackend.mensagem + '). Mostrando heurística local como alternativa — se acabou de fazer deploy no Render, tente de novo em ~1 minuto.';
+      }
+    }
+
+    exibirResultadoGenerico('resultado-domain', canonical);
+    tituloEl.textContent = 'ANALISANDO DOMÍNIO...';
+    document.getElementById('scan-box-domain').classList.remove('active');
+    document.getElementById('btn-analisar-domain').disabled = false;
+
+    adicionarHistorico({
+      id: 'd' + Date.now(),
+      tipo: 'domain',
+      alvo: dominio,
+      score: canonical.score,
+      level: canonical.level,
+      data: new Date().toISOString(),
+    });
+  });
+}
+document.getElementById('btn-analisar-domain').addEventListener('click', executarScanDomain);
+document.getElementById('input-domain').addEventListener('keydown', e => { if (e.key === 'Enter') executarScanDomain(); });
+
+/* =========================================================
+   EMAIL SECURITY
+   ========================================================= */
+function analisarHeuristicaEmail(email) {
+  const [local, dominio] = email.toLowerCase().split('@');
+  const descartavel = DOMINIOS_DESCARTAVEIS.includes(dominio);
+  const webmail = WEBMAILS_GRATUITOS.includes(dominio);
+  const dominioValido = normalizarDominio(dominio) !== null;
+  const marcaSuspeita = MARCAS_CONHECIDAS.find(m => dominio.includes(m) && dominio !== m + '.com' && !WEBMAILS_GRATUITOS.includes(dominio));
+
+  const flags = [
+    { ativo: !dominioValido, motivo: 'O domínio do e-mail não tem um formato válido.', peso: 25, recomendacao: 'Confirme se o endereço foi digitado corretamente.' },
+    { ativo: descartavel, motivo: 'O domínio pertence a um serviço conhecido de e-mail descartável/temporário.', peso: 25, recomendacao: 'Endereços descartáveis são comuns em contas falsas ou de uso único.' },
+    { ativo: !!marcaSuspeita, motivo: `O domínio contém o termo "${marcaSuspeita}", associado a uma marca conhecida, sem corresponder ao domínio oficial dela.`, peso: 30, recomendacao: 'Trate com cautela e-mails vindos deste endereço até confirmar a legitimidade.' },
+  ];
+
+  return { local, dominio, descartavel, webmail, dominioValido, flags };
+}
+
+function canonicalLocalEmail(email) {
+  const h = analisarHeuristicaEmail(email);
+  const resultado = motorDeRisco(h.flags);
+  return {
+    score: resultado.score, level: resultado.level,
+    nota: 'Score calculado apenas com heurísticas locais de formato e listas públicas conhecidas.',
+    tituloInfo: 'Informações do e-mail',
+    infoItems: [
+      { k: 'E-mail', v: escaparTexto(email), full: true },
+      { k: 'Domínio', v: escaparTexto(h.dominio) },
+      { k: 'Formato do domínio', v: h.dominioValido ? 'válido' : 'inválido', cls: h.dominioValido ? 'ok' : 'risco' },
+      { k: 'Provedor gratuito conhecido', v: h.webmail ? 'sim' : 'não' },
+      { k: 'Domínio descartável', v: h.descartavel ? 'sim' : 'não', cls: h.descartavel ? 'alerta' : 'ok' },
+      { k: 'MX / SPF / DMARC', v: 'Não verificado — requer backend', cls: 'indisponivel', full: true },
+      { k: 'Exposição em vazamentos', v: 'Não verificado — requer backend', cls: 'indisponivel', full: true },
+    ],
+    checks: [],
+    motivos: resultado.motivos, recomendacoes: resultado.recomendacoes,
+    fontesAtivas: ['Heurística local', 'Lista de domínios descartáveis'],
+    fontesPendentes: ['MX/SPF/DMARC', 'Data Exposure / breach intelligence'],
+    notaBackend: null,
+  };
+}
+
+function canonicalBackendEmail(data) {
+  const info = data.email_info || {};
+  const exposure = data.data_exposure || {};
+
+  const fontesAtivas = ['DNS (MX/SPF/DMARC)', 'Lista de domínios descartáveis'];
+  const fontesPendentes = [];
+  if (exposure.status === 'not_configured') fontesPendentes.push('Have I Been Pwned'); else fontesAtivas.push('Have I Been Pwned');
+
+  let exposureTexto = 'não configurada', exposureCls = 'indisponivel';
+  if (exposure.status === 'clean') { exposureTexto = 'nenhuma exposição conhecida'; exposureCls = 'ok'; }
+  else if (exposure.status === 'exposed') { exposureTexto = 'exposto em: ' + (exposure.breaches || []).join(', '); exposureCls = 'risco'; }
+  else if (exposure.status === 'error') { exposureTexto = 'erro ao consultar a fonte'; exposureCls = 'indisponivel'; }
+
+  return {
+    score: data.risk.score, level: data.risk.level,
+    nota: 'Dados reais obtidos do backend (DNS, MX, SPF, DMARC' + (exposure.status !== 'not_configured' ? ' e verificação de vazamentos' : '') + ').',
+    tituloInfo: 'Informações do e-mail',
+    infoItems: [
+      { k: 'E-mail', v: escaparTexto(info.email || ''), full: true },
+      { k: 'Domínio', v: escaparTexto(info.domain || '') },
+      { k: 'Domínio existe (DNS)', v: info.domain_exists ? 'sim' : 'não', cls: info.domain_exists ? 'ok' : 'risco' },
+      { k: 'Provedor gratuito conhecido', v: info.is_free_webmail ? 'sim' : 'não' },
+      { k: 'Domínio descartável', v: info.is_disposable ? 'sim' : 'não', cls: info.is_disposable ? 'alerta' : 'ok' },
+      { k: 'Registros MX', v: (info.mx_records && info.mx_records.length) ? escaparTexto(info.mx_records.join(', ')) : 'nenhum', full: true },
+      { k: 'SPF', v: info.spf_present ? 'presente' : 'ausente', cls: info.spf_present ? 'ok' : 'alerta' },
+      { k: 'DMARC', v: info.dmarc_present ? 'presente' : 'ausente', cls: info.dmarc_present ? 'ok' : 'alerta' },
+      { k: 'Exposição em vazamentos', v: escaparTexto(exposureTexto), cls: exposureCls, full: true },
+    ],
+    checks: [],
+    motivos: data.risk.reasons, recomendacoes: data.risk.recommendations,
+    fontesAtivas, fontesPendentes,
+    notaBackend: null,
+  };
+}
+
+async function executarScanEmail() {
+  const bruto = document.getElementById('input-email').value.trim();
+  const erroEl = document.getElementById('erro-email');
+  erroEl.style.display = 'none';
+
+  const regexEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!regexEmail.test(bruto)) {
+    erroEl.textContent = 'E-mail inválido. Use o formato usuario@dominio.com.';
+    erroEl.style.display = 'block';
+    return;
+  }
+
+  document.getElementById('resultado-email').classList.remove('active');
+  document.getElementById('scan-box-email').classList.add('active');
+  document.getElementById('btn-analisar-email').disabled = true;
+
+  const passos = [
+    { texto: 'Validando formato do e-mail' },
+    { texto: 'Extraindo domínio' },
+    { texto: 'Verificando existência do domínio', backend: true },
+    { texto: 'Consultando registros MX', backend: true },
+    { texto: 'Verificando SPF', backend: true },
+    { texto: 'Verificando DMARC', backend: true },
+    { texto: 'Verificando domínio descartável (lista local)' },
+    { texto: 'Consultando exposição em vazamentos', backend: true },
+    { texto: 'Calculando risco heurístico' },
+  ];
+
+  rodarAnimacaoPassos('passos-email', 'barra-email', passos, async () => {
+    const tituloEl = document.querySelector('#scan-box-email .scanning-title');
+    if (getApiBase()) tituloEl.textContent = 'AGUARDANDO RESPOSTA DO BACKEND...';
+
+    const respostaBackend = await chamarBackend('/api/scanner/email', { email: bruto });
+    let canonical;
+    if (respostaBackend.ok) {
+      canonical = canonicalBackendEmail(respostaBackend.dados);
+    } else {
+      canonical = canonicalLocalEmail(bruto);
+      if (respostaBackend.motivo !== 'sem-backend') {
+        canonical.notaBackend = 'Backend configurado, mas não respondeu a tempo (' + respostaBackend.mensagem + '). Mostrando heurística local como alternativa — se acabou de fazer deploy no Render, tente de novo em ~1 minuto.';
+      }
+    }
+
+    exibirResultadoGenerico('resultado-email', canonical);
+    tituloEl.textContent = 'ANALISANDO E-MAIL...';
+    document.getElementById('scan-box-email').classList.remove('active');
+    document.getElementById('btn-analisar-email').disabled = false;
+
+    adicionarHistorico({
+      id: 'e' + Date.now(),
+      tipo: 'email',
+      alvo: bruto,
+      score: canonical.score,
+      level: canonical.level,
+      data: new Date().toISOString(),
+    });
+  });
+}
+document.getElementById('btn-analisar-email').addEventListener('click', executarScanEmail);
+document.getElementById('input-email').addEventListener('keydown', e => { if (e.key === 'Enter') executarScanEmail(); });
+
+/* =========================================================
+   GERADOR DE SENHA
+   ========================================================= */
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js').catch(() => {
+    // Falha esperada ao abrir direto como arquivo local — funciona quando hospedado
+  });
+}
+
+const campoSenha = document.getElementById('senha');
+const btnGerarSenha = document.getElementById('btn-gerar');
+const btnCopiarSenha = document.getElementById('btn-copiar');
+const sliderComprimento = document.getElementById('comprimento');
+const valorComprimento = document.getElementById('valor-comprimento');
+const sliderQuantidade = document.getElementById('quantidade');
+const valorQuantidade = document.getElementById('valor-quantidade');
+const checkMaiusculas = document.getElementById('maiusculas');
+const checkMinusculas = document.getElementById('minusculas');
+const checkNumeros = document.getElementById('numeros');
+const checkSimbolos = document.getElementById('simbolos');
+const medidorSegmentos = [
+  document.getElementById('seg-1'),
+  document.getElementById('seg-2'),
+  document.getElementById('seg-3'),
+  document.getElementById('seg-4')
+];
+const textoForca = document.getElementById('texto-forca');
+const listaHistoricoSenha = document.getElementById('lista-historico');
+const btnLimparHistoricoSenha = document.getElementById('btn-limpar-historico-senha');
+const listaLote = document.getElementById('lista-lote');
+
+const CONJUNTOS = {
+  maiusculas: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
+  minusculas: 'abcdefghijklmnopqrstuvwxyz',
+  numeros: '0123456789',
+  simbolos: '!@#$%^&*()_-+=[]{}'
+};
+
+function indiceAleatorioSeguro(max) {
+  const array = new Uint32Array(1);
+  crypto.getRandomValues(array);
+  return array[0] % max;
+}
+
+function montarCharset() {
+  let charset = '';
+  if (checkMaiusculas.checked) charset += CONJUNTOS.maiusculas;
+  if (checkMinusculas.checked) charset += CONJUNTOS.minusculas;
+  if (checkNumeros.checked) charset += CONJUNTOS.numeros;
+  if (checkSimbolos.checked) charset += CONJUNTOS.simbolos;
+  return charset;
+}
+
+function gerarUmaSenha(charset, comprimento) {
+  let senha = '';
+  for (let i = 0; i < comprimento; i++) {
+    senha += charset[indiceAleatorioSeguro(charset.length)];
+  }
+  return senha;
+}
+
+function calcularEntropia(comprimento, tamanhoConjunto) {
+  if (tamanhoConjunto === 0) return 0;
+  return comprimento * Math.log2(tamanhoConjunto);
+}
+
+function classificarForca(bits) {
+  if (bits < 40) return { nivel: 1, texto: 'Fraca', classe: 'seg-fraca' };
+  if (bits < 64) return { nivel: 2, texto: 'Média', classe: 'seg-media' };
+  if (bits < 100) return { nivel: 3, texto: 'Forte', classe: 'seg-forte' };
+  return { nivel: 4, texto: 'Muito forte', classe: 'seg-forte' };
+}
+
+function atualizarMedidorSenha(tamanhoConjunto, comprimento) {
+  const bits = calcularEntropia(comprimento, tamanhoConjunto);
+  const { nivel, texto, classe } = classificarForca(bits);
+  medidorSegmentos.forEach((seg, i) => {
+    seg.className = 'segmento';
+    if (i < nivel) seg.classList.add(classe);
+  });
+  textoForca.textContent = texto + ' (' + Math.round(bits) + ' bits)';
+}
+
+function resetMedidorSenha() {
+  medidorSegmentos.forEach(seg => { seg.className = 'segmento'; });
+  textoForca.textContent = '—';
+}
+
+async function copiarComFeedback(texto, botao) {
+  if (!texto) return;
+  const original = botao.textContent;
+  try {
+    await navigator.clipboard.writeText(texto);
+    botao.textContent = '✓';
+  } catch (erro) {
+    botao.textContent = '!';
+  }
+  setTimeout(() => { botao.textContent = original; }, 1000);
+}
+
+function criarItemListaSenha(senha, rotulo) {
+  const item = document.createElement('li');
+  item.className = 'historico-item';
+
+  const texto = document.createElement('span');
+  texto.textContent = senha;
+
+  const btn = document.createElement('button');
+  btn.textContent = '⧉';
+  btn.setAttribute('aria-label', rotulo);
+  btn.addEventListener('click', () => copiarComFeedback(senha, btn));
+
+  item.appendChild(texto);
+  item.appendChild(btn);
+  return item;
+}
+
+const CHAVE_HISTORICO_SENHA = 'cifra-historico';
+const MAX_HISTORICO_SENHA = 10;
+
+function carregarHistoricoSenha() {
+  try {
+    const dados = localStorage.getItem(CHAVE_HISTORICO_SENHA);
+    return dados ? JSON.parse(dados) : [];
+  } catch (erro) {
+    return [];
+  }
+}
+
+function salvarHistoricoSenha(lista) {
+  try {
+    localStorage.setItem(CHAVE_HISTORICO_SENHA, JSON.stringify(lista));
+  } catch (erro) {
+    // localStorage indisponível (modo privado, espaço cheio) — ignora
+  }
+}
+
+function renderizarHistoricoSenha(lista) {
+  listaHistoricoSenha.innerHTML = '';
+  if (lista.length === 0) {
+    const vazio = document.createElement('li');
+    vazio.className = 'historico-vazio';
+    vazio.textContent = 'nenhuma senha ainda';
+    listaHistoricoSenha.appendChild(vazio);
+    return;
+  }
+  lista.forEach(senha => {
+    listaHistoricoSenha.appendChild(criarItemListaSenha(senha, 'Copiar senha do histórico'));
+  });
+}
+
+function adicionarAoHistoricoSenha(senha) {
+  const lista = carregarHistoricoSenha();
+  lista.unshift(senha);
+  if (lista.length > MAX_HISTORICO_SENHA) lista.length = MAX_HISTORICO_SENHA;
+  salvarHistoricoSenha(lista);
+  renderizarHistoricoSenha(lista);
+}
+
+function limparHistoricoSenha() {
+  salvarHistoricoSenha([]);
+  renderizarHistoricoSenha([]);
+}
+
+btnLimparHistoricoSenha.addEventListener('click', limparHistoricoSenha);
+
+function renderizarLote(lista) {
+  listaLote.innerHTML = '';
+  if (lista.length === 0) {
+    listaLote.hidden = true;
+    return;
+  }
+  listaLote.hidden = false;
+  lista.forEach(senha => {
+    listaLote.appendChild(criarItemListaSenha(senha, 'Copiar senha do lote'));
+  });
+}
+
+function gerarSenha() {
+  const charset = montarCharset();
+  if (charset === '') {
+    campoSenha.value = 'selecione um tipo';
+    resetMedidorSenha();
+    renderizarLote([]);
+    return null;
+  }
+
+  const comprimento = parseInt(sliderComprimento.value, 10);
+  const quantidade = parseInt(sliderQuantidade.value, 10);
+
+  const senha = gerarUmaSenha(charset, comprimento);
+  atualizarMedidorSenha(charset.length, comprimento);
+  adicionarAoHistoricoSenha(senha);
+
+  if (quantidade > 1) {
+    const extras = [];
+    for (let i = 1; i < quantidade; i++) {
+      const s = gerarUmaSenha(charset, comprimento);
+      adicionarAoHistoricoSenha(s);
+      extras.push(s);
+    }
+    renderizarLote(extras);
+  } else {
+    renderizarLote([]);
+  }
+
+  return senha;
+}
+
+function animarGeracaoSenha(senhaFinal) {
+  const TODOS = CONJUNTOS.maiusculas + CONJUNTOS.minusculas + CONJUNTOS.numeros + CONJUNTOS.simbolos;
+  const reduzMovimento = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (reduzMovimento) {
+    campoSenha.value = senhaFinal;
+    return;
+  }
+  let passos = 0;
+  const totalPassos = 12;
+  const intervalo = setInterval(() => {
+    let texto = '';
+    for (let i = 0; i < senhaFinal.length; i++) {
+      texto += TODOS[Math.floor(Math.random() * TODOS.length)];
+    }
+    campoSenha.value = texto;
+    passos++;
+    if (passos >= totalPassos) {
+      clearInterval(intervalo);
+      campoSenha.value = senhaFinal;
+    }
+  }, 40);
+}
+
+btnGerarSenha.addEventListener('click', () => {
+  const senha = gerarSenha();
+  if (senha) animarGeracaoSenha(senha);
+});
+
+sliderComprimento.addEventListener('input', () => {
+  valorComprimento.textContent = sliderComprimento.value;
+});
+
+sliderQuantidade.addEventListener('input', () => {
+  valorQuantidade.textContent = sliderQuantidade.value;
+});
+
+btnCopiarSenha.addEventListener('click', () => copiarComFeedback(campoSenha.value, btnCopiarSenha));
+
+/* =========================================================
+   INICIALIZAÇÃO
+   ========================================================= */
+document.getElementById('input-api-base').value = getApiBase();
+testarEAtualizarStatusBackend();
+renderizarHistorico();
+renderizarDashboard();
+renderizarHistoricoSenha(carregarHistoricoSenha());
+const senhaInicial = gerarSenha();
+if (senhaInicial) animarGeracaoSenha(senhaInicial);
+</script>
+</body>
+</html>
