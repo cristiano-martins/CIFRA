@@ -177,7 +177,7 @@ CIPHER Scanner is a collaborative cybersecurity project developed by the **CIPHE
 | Member | Role |
 |---------|------|
 | **Cristiano Martins** | Backend Developer, Cybersecurity Researcher & Project Maintenance |
-| **Keisley** | Frontend Developer |
+| **Keisley Neves** | Frontend Developer | innovative ideas |
 | **Wagner** | Creative Director, Branding & Marketing |
 
 ## Responsibilities
@@ -192,12 +192,13 @@ CIPHER Scanner is a collaborative cybersecurity project developed by the **CIPHE
 - Bug fixing
 - Deployment
 
-### Keisley
+### Keisley Neves
 - Frontend development
 - User Interface (UI)
 - Responsive design
 - Frontend improvements
 - Collaboration on new features
+- Innovative ideas
 
 ### Wagner
 - Creative direction
