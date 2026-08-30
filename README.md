@@ -47,13 +47,40 @@ This repository serves as the project's source code archive and portfolio refere
 # Project Structure
 
 ```
-cipher-technologies/
+cipher-scanner/
+│
+├── app/
+│   ├── api/
+│   ├── database/
+│   ├── scanner/
+│   ├── security/
+│   ├── services/
+│   ├── __init__.py
+│   ├── config.py
+│   └── main.py
+│
+├── css/
+│   └── style.css
+│
+├── js/
+│   └── app.js
+│
+├── images/
+│   ├── dashboard-01-screenshot.png
+│   ├── domain-scanner.png.png
+│   ├── email-scanner.png.png
+│   ├── password-gerator.png.png
+│   └── url-scanner.png.png
 │
 ├── index.html
-├── apps/
-├── css/
-├── js/
-├── images/
+├── manifest.json
+├── sw.js
+├── icon.svg
+├── render.yaml
+├── requirements.txt
+├── runtime.txt
+├── .python-version
+├── LICENSE
 └── README.md
 ```
 
@@ -143,6 +170,47 @@ The project aims to:
 CIPHER Technologies is a collaborative project developed by multiple contributors.
 
 ---
+# 👥 Contributors
+
+CIPHER Scanner is a collaborative cybersecurity project developed by the **CIPHER Technologies Team**.
+
+| Member | Role |
+|---------|------|
+| **Cristiano Martins** | Backend Developer, Cybersecurity Researcher & Project Maintenance |
+| **Keisley** | Frontend Developer |
+| **Wagner** | Creative Director, Branding & Marketing |
+
+## Responsibilities
+
+### Cristiano Martins
+- Backend development
+- Scanner implementation
+- API integration
+- Security research
+- Feature implementation
+- Project maintenance
+- Bug fixing
+- Deployment
+
+### Keisley
+- Frontend development
+- User Interface (UI)
+- Responsive design
+- Frontend improvements
+- Collaboration on new features
+
+### Wagner
+- Creative direction
+- Brand identity
+- Logo design
+- Background artwork
+- Visual assets
+- Marketing and branding strategy
+
+---
+
+Together, we collaborate to build a modern cybersecurity platform focused on digital security, innovation, and usability.
+
 
 # Deployment
 
