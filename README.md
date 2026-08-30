@@ -50,7 +50,7 @@ This repository serves as the project's source code archive and portfolio refere
 cipher-technologies/
 │
 ├── index.html
-├── assets/
+├── apps/
 ├── css/
 ├── js/
 ├── images/
