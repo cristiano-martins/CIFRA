@@ -125,6 +125,19 @@ The project aims to:
 
 ---
 
+### URL Scanner
+
+![URL Scanner](./images/url-scanner.png.png)
+
+---
+
+
+### Password Gerator
+
+![Password Gerator](./images/password-gerator.png.png)
+
+---
+
 # Team
 
 CIPHER Technologies is a collaborative project developed by multiple contributors.
