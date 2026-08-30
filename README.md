@@ -105,15 +105,23 @@ The project aims to:
 
 ---
 
-# Screenshots
+## 📸 Screenshots
 
-You can add screenshots here.
+### Dashboard
 
-```
-/screenshots/home.png
-/screenshots/about.png
-/screenshots/services.png
-```
+![Dashboard](./screenshots/dashboard.png)
+
+---
+
+### Domain Scanner
+
+![Domain Scanner](./screenshots/domain-scanner.png)
+
+---
+
+### Email Security
+
+![Email Security](./screenshots/email-scanner.png)
 
 ---
 
