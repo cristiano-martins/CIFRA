@@ -109,19 +109,19 @@ The project aims to:
 
 ### Dashboard
 
-![Dashboard](./screenshots/dashboard.png)
+![Dashboard](./images/dashboard-01-screenshot.png)
 
 ---
 
 ### Domain Scanner
 
-![Domain Scanner](./screenshots/domain-scanner.png)
+![Domain Scanner](./images/domain-scanner.png.png)
 
 ---
 
 ### Email Security
 
-![Email Security](./screenshots/email-scanner.png)
+![Email Security](./images/email-scanner.png.png)
 
 ---
 
